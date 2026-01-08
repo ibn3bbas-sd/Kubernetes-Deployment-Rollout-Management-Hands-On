@@ -116,6 +116,11 @@ Pod Template:
   Containers:
    nginx:
     Image:      nginx:1.16
+    Port:       <none>
+    Host Port:  <none>
+    Environment: <none>
+    Mounts:     <none>
+  Volumes:      <none>
 ```
 
 ---
@@ -144,11 +149,27 @@ kubectl edit deployments.apps nginx --record
 
 This opens your default editor. Modify the image version, save, and exit.
 
+**Verify the update:**
+
+```bash
+kubectl rollout history deployment nginx
+```
+
+**Output:**
+
+```
+deployment.apps/nginx
+REVISION  CHANGE-CAUSE
+1         <none>
+2         kubectl set image deployment nginx nginx=nginx:1.17 --record=true
+3         kubectl edit deployments.apps nginx --record=true
+```
+
 ---
 
 ## 📝 Recording Changes
 
-Recording changes helps track **what changed and why**.
+Recording changes helps track **what changed and why**. The `--record` flag captures the command used for each revision in the CHANGE-CAUSE field:
 
 ```bash
 kubectl set image deployment nginx nginx=nginx:1.17 --record
@@ -163,9 +184,34 @@ kubectl rollout history deployment nginx
 **Output:**
 
 ```
+deployment.apps/nginx
 REVISION  CHANGE-CAUSE
 1         <none>
 2         kubectl set image deployment nginx nginx=nginx:1.17 --record=true
+```
+
+**View detailed information about a specific revision:**
+
+```bash
+kubectl rollout history deployment nginx --revision=3
+```
+
+**Output:**
+
+```
+deployment.apps/nginx with revision #3
+Pod Template:
+  Labels:       app=nginx
+                pod-template-hash=787f54657b
+  Annotations:  kubernetes.io/change-cause: kubectl edit deployments.apps nginx --record=true
+  Containers:
+   nginx:
+    Image:      nginx:latest
+    Port:       <none>
+    Host Port:  <none>
+    Environment: <none>
+    Mounts:     <none>
+  Volumes:      <none>
 ```
 
 ---
@@ -180,11 +226,25 @@ Undo the most recent change:
 kubectl rollout undo deployment nginx
 ```
 
+**Verify the rollback:**
+
+```bash
+kubectl describe deployment nginx | grep -i image:
+```
+
+**Expected output:**
+
+```
+Image: nginx:1.17
+```
+
+With this command, the deployment rolls back to the previous version.
+
 ---
 
 ### 🎯 Rollback to a Specific Revision
 
-Rollback to a defined revision:
+Rollback to a defined revision using the `--to-revision` flag:
 
 ```bash
 kubectl rollout undo deployment nginx --to-revision=1
@@ -202,17 +262,39 @@ kubectl describe deployment nginx | grep -i image:
 Image: nginx:1.16
 ```
 
+**Check the revision history after rollback:**
+
+```bash
+kubectl rollout history deployment nginx
+```
+
+**Output:**
+
+```
+deployment.apps/nginx
+REVISION  CHANGE-CAUSE
+1         <none>
+3         kubectl edit deployments.apps nginx --record=true
+4         kubectl set image deployment nginx nginx=nginx:1.17 --record=true
+```
+
 ---
 
 ## ✅ Best Practices
 
-✔️ Always monitor rollouts using `kubectl rollout status`
-✔️ Document changes using annotations or version control
-✔️ Test updates in staging before production
-✔️ Limit revision history using `revisionHistoryLimit`
-✔️ Avoid using `latest` image tags
-✔️ Configure readiness and liveness probes
-✔️ Always have a rollback strategy before deploying
+✔️ **Always monitor rollouts** using `kubectl rollout status` to ensure deployments complete successfully
+
+✔️ **Document changes** using annotations or version control (while `--record` is deprecated)
+
+✔️ **Test updates in staging** before rolling out to production
+
+✔️ **Limit revision history** using `revisionHistoryLimit` to control storage
+
+✔️ **Avoid using `latest` tags** — always specify explicit image versions
+
+✔️ **Configure health checks** — implement readiness and liveness probes for safe rollouts
+
+✔️ **Always have a rollback strategy** before deploying to production environments
 
 ---
 
@@ -236,9 +318,16 @@ Image: nginx:1.16
 
 ### 🚨 Rollout Stuck or Failed
 
+Check pod status and events:
+
 ```bash
 kubectl get pods -l app=nginx
 kubectl describe pod <pod-name>
+```
+
+Check deployment events:
+
+```bash
 kubectl describe deployment nginx
 ```
 
@@ -246,25 +335,31 @@ kubectl describe deployment nginx
 
 ### 📦 Image Pull Errors
 
+Verify the image name and version:
+
 ```bash
 kubectl get deployment nginx -o jsonpath='{.spec.template.spec.containers[0].image}'
 ```
+
+Check if the image exists in the registry and verify credentials if using a private registry.
 
 ---
 
 ### ❌ Rollback Not Working
 
+Check the revision history to ensure the target revision exists:
+
 ```bash
 kubectl rollout history deployment nginx
 ```
 
-Ensure the target revision exists before attempting rollback.
+Ensure the target revision exists before attempting rollback. If the revision was pruned due to `revisionHistoryLimit`, it cannot be restored.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome.
+Contributions are welcome!  
 Feel free to submit issues or pull requests to improve this guide.
 
 ---
