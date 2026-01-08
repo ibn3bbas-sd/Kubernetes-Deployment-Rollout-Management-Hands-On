@@ -1,0 +1,233 @@
+# Kubernetes Deployment Rollout Management
+
+A comprehensive guide to managing Kubernetes deployments, including rollout strategies, version control, and rollback procedures.
+
+## 📋 Table of Contents
+
+- [Overview](#overview)
+- [Prerequisites](#prerequisites)
+- [Creating Your First Deployment](#creating-your-first-deployment)
+- [Monitoring Rollout Status](#monitoring-rollout-status)
+- [Viewing Rollout History](#viewing-rollout-history)
+- [Updating Deployments](#updating-deployments)
+- [Recording Changes](#recording-changes)
+- [Rolling Back Changes](#rolling-back-changes)
+- [Best Practices](#best-practices)
+- [Common Commands Reference](#common-commands-reference)
+- [Troubleshooting](#troubleshooting)
+
+## Overview
+
+This repository demonstrates practical techniques for managing Kubernetes deployments with a focus on safe rollout practices, version tracking, and rollback strategies. These examples are based on real-world scenarios using nginx as the application.
+
+## Prerequisites
+
+- Kubernetes cluster (v1.19+)
+- kubectl CLI tool installed and configured
+- Basic understanding of Kubernetes concepts
+
+## Creating Your First Deployment
+
+Start by creating a simple deployment using the nginx image:
+
+```bash
+kubectl create deployment nginx --image=nginx:1.16
+```
+
+**Expected output:**
+```
+deployment.apps/nginx created
+```
+
+## Monitoring Rollout Status
+
+Check the status of your deployment rollout:
+
+```bash
+kubectl rollout status deployment nginx
+```
+
+**Expected output:**
+```
+Waiting for deployment "nginx" rollout to finish: 0 of 1 updated replicas are available...
+deployment "nginx" successfully rolled out
+```
+
+## Viewing Rollout History
+
+### Basic History View
+
+View the complete rollout history:
+
+```bash
+kubectl rollout history deployment nginx
+```
+
+**Expected output:**
+```
+deployment.apps/nginx 
+REVISION  CHANGE-CAUSE
+1         <none>
+```
+
+### Detailed Revision Information
+
+Inspect specific revision details using the `--revision` flag:
+
+```bash
+kubectl rollout history deployment nginx --revision=1
+```
+
+**Expected output:**
+```
+deployment.apps/nginx with revision #1
+Pod Template:
+  Labels:       app=nginx
+                pod-template-hash=78449c65d4
+  Containers:
+   nginx:
+    Image:      nginx:1.16
+    Port:       <none>
+    Host Port:  <none>
+    Environment: <none>
+    Mounts:     <none>
+  Volumes:      <none>
+```
+
+## Updating Deployments
+
+### Method 1: Using `kubectl set image`
+
+Update the container image version:
+
+```bash
+kubectl set image deployment nginx nginx=nginx:1.17 --record
+```
+
+**Note:** The `--record` flag is deprecated but still functional. It saves the command in the rollout history.
+
+### Method 2: Using `kubectl edit`
+
+Edit the deployment manifest directly:
+
+```bash
+kubectl edit deployments.apps nginx --record
+```
+
+This opens your default editor. Change the image version and save the file.
+
+## Recording Changes
+
+The `--record` flag captures the command used for each revision in the CHANGE-CAUSE field:
+
+```bash
+kubectl set image deployment nginx nginx=nginx:1.17 --record
+```
+
+**Verify the recorded change:**
+```bash
+kubectl rollout history deployment nginx
+```
+
+**Output:**
+```
+deployment.apps/nginx 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         kubectl set image deployment nginx nginx=nginx:1.17 --record=true
+```
+
+## Rolling Back Changes
+
+### Rollback to Previous Revision
+
+Undo the last change and return to the previous revision:
+
+```bash
+kubectl rollout undo deployment nginx
+```
+
+### Rollback to Specific Revision
+
+Use the `--to-revision` flag to rollback to a specific version:
+
+```bash
+kubectl rollout undo deployment nginx --to-revision=1
+```
+
+**Verify the rollback:**
+```bash
+kubectl describe deployment nginx | grep -i image:
+```
+
+**Expected output:**
+```
+Image: nginx:1.16
+```
+
+## Best Practices
+
+1. **Always Monitor Rollouts**: Use `kubectl rollout status` to ensure deployments complete successfully
+2. **Document Changes**: While `--record` is deprecated, document your changes in version control or annotation
+3. **Test Before Production**: Test rollouts in staging environments first
+4. **Keep Revision History**: Monitor the number of revisions kept (controlled by `revisionHistoryLimit`)
+5. **Use Version Tags**: Always specify image versions rather than using `latest`
+6. **Implement Health Checks**: Configure readiness and liveness probes for safe rollouts
+7. **Plan Rollback Strategy**: Always have a rollback plan before updating production deployments
+
+## Common Commands Reference
+
+| Command | Description |
+|---------|-------------|
+| `kubectl create deployment <name> --image=<image>` | Create a new deployment |
+| `kubectl rollout status deployment <name>` | Check rollout status |
+| `kubectl rollout history deployment <name>` | View rollout history |
+| `kubectl rollout history deployment <name> --revision=<n>` | View specific revision details |
+| `kubectl set image deployment <name> <container>=<image>` | Update container image |
+| `kubectl edit deployment <name>` | Edit deployment directly |
+| `kubectl rollout undo deployment <name>` | Rollback to previous revision |
+| `kubectl rollout undo deployment <name> --to-revision=<n>` | Rollback to specific revision |
+| `kubectl describe deployment <name>` | View deployment details |
+
+## Troubleshooting
+
+### Rollout Stuck or Failed
+
+Check pod status:
+```bash
+kubectl get pods -l app=nginx
+kubectl describe pod <pod-name>
+```
+
+Check deployment events:
+```bash
+kubectl describe deployment nginx
+```
+
+### Image Pull Errors
+
+Verify image name and version:
+```bash
+kubectl get deployment nginx -o jsonpath='{.spec.template.spec.containers[0].image}'
+```
+
+### Rollback Not Working
+
+Check revision history:
+```bash
+kubectl rollout history deployment nginx
+```
+
+Ensure the target revision exists before attempting rollback.
+
+## Contributing
+
+Feel free to submit issues or pull requests to improve this guide.
+
+## License
+
+MIT License - feel free to use this guide for learning and reference.
+
+## Author
+
+Created as a practical reference for Kubernetes deployment management.
