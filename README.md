@@ -372,6 +372,6 @@ MIT License — free to use for learning and reference.
 
 ## 👤 Author
 
-Created as a **practical reference for Kubernetes deployment rollout and rollback management**.
+Created as a **practical reference for Kubernetes deployment rollout and rollback management** from **KodeKloud CKAD Course**.
 
 ---
