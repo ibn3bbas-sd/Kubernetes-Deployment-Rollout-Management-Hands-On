@@ -130,8 +130,7 @@ Update the container image version:
 kubectl set image deployment nginx nginx=nginx:1.17 --record
 ```
 
-⚠️ **Note:**
-The `--record` flag is deprecated but still functional. It stores the executed command in the rollout history.
+⚠️ **Note:** The `--record` flag is deprecated but still functional. It stores the executed command in the rollout history.
 
 ---
 
@@ -149,7 +148,7 @@ This opens your default editor. Modify the image version, save, and exit.
 
 ## 📝 Recording Changes
 
-Recording changes helps track **who changed what and why**.
+Recording changes helps track **what changed and why**.
 
 ```bash
 kubectl set image deployment nginx nginx=nginx:1.17 --record
@@ -237,24 +236,15 @@ Image: nginx:1.16
 
 ### 🚨 Rollout Stuck or Failed
 
-Check pod status:
-
 ```bash
 kubectl get pods -l app=nginx
 kubectl describe pod <pod-name>
-```
-
-Check deployment events:
-
-```bash
 kubectl describe deployment nginx
 ```
 
 ---
 
 ### 📦 Image Pull Errors
-
-Verify the image reference:
 
 ```bash
 kubectl get deployment nginx -o jsonpath='{.spec.template.spec.containers[0].image}'
@@ -264,25 +254,29 @@ kubectl get deployment nginx -o jsonpath='{.spec.template.spec.containers[0].ima
 
 ### ❌ Rollback Not Working
 
-Ensure the revision exists:
-
 ```bash
 kubectl rollout history deployment nginx
 ```
+
+Ensure the target revision exists before attempting rollback.
 
 ---
 
 ## 🤝 Contributing
 
 Contributions are welcome.
-Feel free to submit **issues**, **pull requests**, or **enhancements**.
+Feel free to submit issues or pull requests to improve this guide.
 
 ---
 
 ## 📄 License
 
-MIT License — free to use for learning, reference, and projects.
+MIT License — free to use for learning and reference.
 
 ---
 
 ## 👤 Author
+
+Created as a **practical reference for Kubernetes deployment rollout and rollback management**.
+
+---
